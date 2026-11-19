@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { GpsPoint } from "./types/gps";
 import { parseGpsCsv } from "./utils/parseGpsCsv";
+import { calculateGpsStats } from "./utils/gpsStats";
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [csvText, setCsvText] = useState<string>("");
   const [points, setPoints] = useState<GpsPoint[]>([]);
+  const stats = useMemo(() => {
+    return calculateGpsStats(points);
+  }, [points]);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -15,16 +20,22 @@ function App() {
     if (!selectedFile) return;
 
     setFile(selectedFile);
+    setPoints([]);
+    setError(null);
+    setCsvText("");
 
-    const text = await selectedFile.text();
-
-    setCsvText(text);
-
-    const parsedPoints = parseGpsCsv(text);
-
-    setPoints(parsedPoints);
-
-    console.log(parsedPoints);
+    try {
+      const text = await selectedFile.text();
+      setCsvText(text);
+      const parsedPoints = parseGpsCsv(text);
+      setPoints(parsedPoints);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("알 수 없는 오류가 발생했습니다.");
+      }
+    }
   };
 
   return (
@@ -42,6 +53,8 @@ function App() {
         <p>선택한 파일: {file.name}</p>
       )}
 
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
       {csvText && (
         <div>
           <h2>CSV 미리보기</h2>
@@ -49,7 +62,18 @@ function App() {
         </div>
       )}
 
-      <p>GPS 포인트 개수: {points.length}</p>
+      {!error && points.length > 0 && (
+        <div>
+          <div>전체 GPS 포인트 : {stats.totalPoints}</div>
+          <div>유효 GPS 포인트 : {stats.validPoints}</div>
+          <div>
+            평균 보정 거리 : {stats.averageCorrectionDistance.toFixed(2)}m
+          </div>
+          <div>
+            최대 보정 거리 : {stats.maxCorrectionDistance.toFixed(2)}m
+          </div>
+        </div>
+      )}
     </main>
   );
 }
