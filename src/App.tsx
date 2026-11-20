@@ -3,6 +3,7 @@ import type { GpsPoint } from "./types/gps";
 import { parseGpsCsv } from "./utils/parseGpsCsv";
 import { calculateGpsStats } from "./utils/gpsStats";
 import { calculateGpsSpeedStats } from "./utils/gpsSpeed";
+import { detectSpeedOutliers } from "./utils/gpsOutliers";
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
@@ -12,6 +13,7 @@ function App() {
     return calculateGpsStats(points);
   }, [points]);
   const [error, setError] = useState<string | null>(null);
+  const [speedThreshold, setSpeedThreshold] = useState(25);
 
   const rawSpeedStats = useMemo(
     () => calculateGpsSpeedStats(points, "raw"),
@@ -20,6 +22,16 @@ function App() {
   const filteredSpeedStats = useMemo(
     () => calculateGpsSpeedStats(points, "filtered"),
     [points]
+  );
+
+  const rawOutliers = useMemo(
+    () => detectSpeedOutliers(points, "raw", speedThreshold),
+    [points, speedThreshold]
+  );
+
+  const filteredOutliers = useMemo(
+    () => detectSpeedOutliers(points, "filtered", speedThreshold),
+    [points, speedThreshold]
   );
 
   const handleFileChange = async (
@@ -109,6 +121,72 @@ function App() {
           <div>
             필터링 GPS 유효 속도 구간 : {filteredSpeedStats.validSegments}개
           </div>
+          <div>
+            <label htmlFor="speed-threshold">
+              이상 속도 기준: {speedThreshold} km/h
+            </label>
+            <input
+              id="speed-threshold"
+              type="range"
+              min={5}
+              max={40}
+              step={1}
+              value={speedThreshold}
+              onChange={(e) => setSpeedThreshold(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            원본 GPS 이상 속도 구간 : {rawOutliers.length}개
+          </div>
+          <div>
+            필터링 GPS 이상 속도 구간 : {filteredOutliers.length}개
+          </div>
+          <h3>원본 GPS 이상 속도 구간</h3>
+          {rawOutliers.length === 0 ? (
+            <p>이상 속도 구간이 없습니다.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Sequence</th>
+                  <th>기록 시간</th>
+                  <th>속도 (km/h)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rawOutliers.map((outlier) => (
+                  <tr key={outlier.sequence}>
+                    <td>{outlier.sequence}</td>
+                    <td>{new Date(outlier.recordedAt).toLocaleString("ko-KR")}</td>
+                    <td>{outlier.speed.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <h3>필터링 GPS 이상 속도 구간</h3>
+          {filteredOutliers.length === 0 ? (
+            <p>이상 속도 구간이 없습니다.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Sequence</th>
+                  <th>기록 시간</th>
+                  <th>속도 (km/h)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOutliers.map((outlier) => (
+                  <tr key={outlier.sequence}>
+                    <td>{outlier.sequence}</td>
+                    <td>{new Date(outlier.recordedAt).toLocaleString("ko-KR")}</td>
+                    <td>{outlier.speed.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </main>
