@@ -5,6 +5,7 @@ import { calculateGpsStats } from "./utils/gpsStats";
 import { calculateGpsSpeedStats } from "./utils/gpsSpeed";
 import { detectSpeedOutliers } from "./utils/gpsOutliers";
 import { compareSpeedOutliers } from "./utils/gpsSpeedComparison";
+import GpsMap from "./components/GpsMap";
 
 function App() {
   // 1. state
@@ -250,6 +251,10 @@ function App() {
               </table>
             </section>
           }
+          <section>
+            <h3>GPS 경로 지도</h3>
+            <GpsMap points={points} />
+          </section>
         </div>
       )}
     </main>
