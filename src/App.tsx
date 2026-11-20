@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { GpsPoint } from "./types/gps";
 import { parseGpsCsv } from "./utils/parseGpsCsv";
 import { calculateGpsStats } from "./utils/gpsStats";
+import { calculateGpsSpeedStats } from "./utils/gpsSpeed";
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
@@ -11,6 +12,15 @@ function App() {
     return calculateGpsStats(points);
   }, [points]);
   const [error, setError] = useState<string | null>(null);
+
+  const rawSpeedStats = useMemo(
+    () => calculateGpsSpeedStats(points, "raw"),
+    [points]
+  );
+  const filteredSpeedStats = useMemo(
+    () => calculateGpsSpeedStats(points, "filtered"),
+    [points]
+  );
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -80,6 +90,24 @@ function App() {
           </div>
           <div>
             GPS 이동 거리 변화율 : {stats.distanceChangePercent > 0 ? "+" : ""}{stats.distanceChangePercent.toFixed(2)}%
+          </div>
+          <div>
+            원본 GPS 평균 속도 : {rawSpeedStats.averageSpeed.toFixed(2)} km/h
+          </div>
+          <div>
+            원본 GPS 최대 속도 : {rawSpeedStats.maxSpeed.toFixed(2)} km/h
+          </div>
+          <div>
+            필터링 GPS 평균 속도 : {filteredSpeedStats.averageSpeed.toFixed(2)} km/h
+          </div>
+          <div>
+            필터링 GPS 최대 속도 : {filteredSpeedStats.maxSpeed.toFixed(2)} km/h
+          </div>
+          <div>
+            원본 GPS 유효 속도 구간 : {rawSpeedStats.validSegments}개
+          </div>
+          <div>
+            필터링 GPS 유효 속도 구간 : {filteredSpeedStats.validSegments}개
           </div>
         </div>
       )}
