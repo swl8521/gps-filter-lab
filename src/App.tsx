@@ -72,6 +72,15 @@ function App() {
           <div>
             최대 보정 거리 : {stats.maxCorrectionDistance.toFixed(2)}m
           </div>
+          <div>
+            원본 GPS 총 이동 거리 : {stats.rawTotalDistance.toFixed(2)}m
+          </div>
+          <div>
+            필터링 GPS 총 이동 거리 : {stats.filteredTotalDistance.toFixed(2)}m
+          </div>
+          <div>
+            GPS 이동 거리 변화율 : {stats.distanceChangePercent > 0 ? "+" : ""}{stats.distanceChangePercent.toFixed(2)}%
+          </div>
         </div>
       )}
     </main>
