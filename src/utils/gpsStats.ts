@@ -24,6 +24,12 @@ function calculateTotalDistance(
     const prev = points[i - 1];
     const current = points[i];
 
+    // prev 또는 current의 원본 위도·경도 중
+    // 하나라도 null이면 continue
+    if (prev.rawLatitude === null || prev.rawLongitude === null || current.rawLatitude === null || current.rawLongitude === null) {
+      continue;
+    }
+
     const prevLat = type === "raw"
       ? prev.rawLatitude
       : prev.filteredLatitude;
