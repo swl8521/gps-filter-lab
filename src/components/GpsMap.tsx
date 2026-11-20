@@ -55,21 +55,27 @@ function MapSelectionUpdater({
 
   useEffect(() => {
     if (selectedSequence === null) return;
-
     const point = points.find(point => point.sequence === selectedSequence);
-
     if (!point) return;
+
+    const handleMoveEnd = () => {
+      const marker = markerRefs.current.get(selectedSequence);
+      if (marker) {
+        marker.openPopup();
+      }
+    };
+
+    map.once("moveend", handleMoveEnd);
 
     map.flyTo(
       [point.filteredLatitude, point.filteredLongitude],
       17
     );
 
-    const marker = markerRefs.current.get(selectedSequence);
-
-    if (marker) {
-      marker.openPopup();
+    return () => {
+      map.off("moveend", handleMoveEnd);
     }
+
   }, [map, selectedSequence, points, markerRefs]);
 
   return null;
