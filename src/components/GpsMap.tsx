@@ -1,16 +1,33 @@
-import { MapContainer, TileLayer, Polyline } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Polyline,
+  CircleMarker,
+  useMap,
+  Popup,
+} from "react-leaflet";
+import type { CircleMarker as LeafletCircleMarker } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { GpsPoint } from "../types/gps";
 import type { LatLngTuple } from "leaflet";
-import { useMap } from "react-leaflet";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import type { GpsSpeedComparison } from "../utils/gpsSpeedComparison";
+import type { RefObject } from "react";
 
 interface GpsMapProps {
   points: GpsPoint[];
+  speedComparisons: GpsSpeedComparison[];
+  selectedSequence: number | null;
 }
 
 interface MapBoundsUpdaterProps {
   positions: LatLngTuple[];
+}
+
+interface MapSelectionUpdaterProps {
+  selectedSequence: number | null;
+  points: GpsPoint[];
+  markerRefs: RefObject<Map<number, LeafletCircleMarker>>;
 }
 
 type ValidRawGpsPoint = GpsPoint & {
@@ -18,17 +35,48 @@ type ValidRawGpsPoint = GpsPoint & {
   rawLongitude: number;
 };
 
-export default function GpsMap({ points }: GpsMapProps) {
-  function MapBoundsUpdater({ positions }: MapBoundsUpdaterProps) {
-    const map = useMap();
+function MapBoundsUpdater({ positions }: MapBoundsUpdaterProps) {
+  const map = useMap();
 
-    useEffect(() => {
-      if (positions.length === 0) return;
-      map.fitBounds(positions);
-    }, [map, positions]);
+  useEffect(() => {
+    if (positions.length === 0) return;
+    map.fitBounds(positions);
+  }, [map, positions]);
 
-    return null;
-  }
+  return null;
+}
+
+function MapSelectionUpdater({
+  selectedSequence,
+  points,
+  markerRefs
+}: MapSelectionUpdaterProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (selectedSequence === null) return;
+
+    const point = points.find(point => point.sequence === selectedSequence);
+
+    if (!point) return;
+
+    map.flyTo(
+      [point.filteredLatitude, point.filteredLongitude],
+      17
+    );
+
+    const marker = markerRefs.current.get(selectedSequence);
+
+    if (marker) {
+      marker.openPopup();
+    }
+  }, [map, selectedSequence, points, markerRefs]);
+
+  return null;
+}
+
+export default function GpsMap({ points, speedComparisons, selectedSequence }: GpsMapProps) {
+  const markerRefs = useRef<Map<number, LeafletCircleMarker>>(new Map());
 
   const rawPositions = useMemo(() => {
     return points
@@ -48,6 +96,30 @@ export default function GpsMap({ points }: GpsMapProps) {
         return [point.filteredLatitude, point.filteredLongitude];
       });
   }, [points]);
+
+  const outlierPositions = speedComparisons.map((comparison) => {
+    const gpsPoint = points.find(point => point.sequence === comparison.sequence);
+
+    if (!gpsPoint) return null;
+
+    return {
+      position: [gpsPoint.filteredLatitude, gpsPoint.filteredLongitude] as LatLngTuple,
+      comparison: comparison
+    };
+  }).filter((comparison) => comparison !== null);
+
+  function getOutlierColor(
+    status: GpsSpeedComparison["status"]
+  ): string {
+    switch (status) {
+      case "resolved":
+        return "green";
+      case "remaining":
+        return "red";
+      case "introduced":
+        return "orange";
+    }
+  }
 
   return (
     <MapContainer
@@ -76,6 +148,38 @@ export default function GpsMap({ points }: GpsMapProps) {
         }}
       />
       <MapBoundsUpdater positions={rawPositions} />
+      {
+        outlierPositions.map((item) =>
+          <CircleMarker
+            key={item.comparison.sequence}
+            center={item.position}
+            radius={6}
+            pathOptions={{ color: getOutlierColor(item.comparison.status) }}
+            ref={(marker) => {
+              if (marker) {
+                markerRefs.current.set(item.comparison.sequence, marker);
+              } else {
+                markerRefs.current.delete(item.comparison.sequence);
+              }
+            }}
+          >
+            <Popup>
+              <div>GPS 이상 속도 정보</div>
+              <div>
+                <div>Sequence: {item.comparison.sequence}</div>
+                <div>원본 속도: {item.comparison.rawSpeed.toFixed(2)} km/h</div>
+                <div>필터링 속도: {item.comparison.filteredSpeed.toFixed(2)} km/h</div>
+                <div>상태: {item.comparison.status}</div>
+              </div>
+            </Popup>
+          </CircleMarker>
+        )
+      }
+      <MapSelectionUpdater
+        selectedSequence={selectedSequence}
+        points={points}
+        markerRefs={markerRefs}
+      />
     </MapContainer>
   );
 }

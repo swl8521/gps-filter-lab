@@ -15,6 +15,8 @@ function App() {
 
   const [error, setError] = useState<string | null>(null);
   const [speedThreshold, setSpeedThreshold] = useState(25);
+  const [selectedSequence, setSelectedSequence] =
+    useState<number | null>(null);
 
   // 2. GPS 통계
   const stats = useMemo(() => {
@@ -239,7 +241,16 @@ function App() {
                     speedComparisons.map(comparison => {
                       return (
                         <tr key={comparison.sequence}>
-                          <td>{comparison.sequence}</td>
+                          <td>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedSequence(comparison.sequence)
+                              }}
+                            >
+                              {comparison.sequence}
+                            </button>
+                          </td>
                           <td>{comparison.rawSpeed.toFixed(2)}</td>
                           <td>{comparison.filteredSpeed.toFixed(2)}</td>
                           <td>{comparison.status}</td>
@@ -253,7 +264,7 @@ function App() {
           }
           <section>
             <h3>GPS 경로 지도</h3>
-            <GpsMap points={points} />
+            <GpsMap points={points} speedComparisons={speedComparisons} selectedSequence={selectedSequence} />
           </section>
         </div>
       )}
