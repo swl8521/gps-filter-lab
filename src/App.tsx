@@ -4,17 +4,23 @@ import { parseGpsCsv } from "./utils/parseGpsCsv";
 import { calculateGpsStats } from "./utils/gpsStats";
 import { calculateGpsSpeedStats } from "./utils/gpsSpeed";
 import { detectSpeedOutliers } from "./utils/gpsOutliers";
+import { compareSpeedOutliers } from "./utils/gpsSpeedComparison";
 
 function App() {
+  // 1. state
   const [file, setFile] = useState<File | null>(null);
   const [csvText, setCsvText] = useState<string>("");
   const [points, setPoints] = useState<GpsPoint[]>([]);
-  const stats = useMemo(() => {
-    return calculateGpsStats(points);
-  }, [points]);
+
   const [error, setError] = useState<string | null>(null);
   const [speedThreshold, setSpeedThreshold] = useState(25);
 
+  // 2. GPS 통계
+  const stats = useMemo(() => {
+    return calculateGpsStats(points);
+  }, [points]);
+
+  // 3. 속도 통계
   const rawSpeedStats = useMemo(
     () => calculateGpsSpeedStats(points, "raw"),
     [points]
@@ -24,6 +30,7 @@ function App() {
     [points]
   );
 
+  // 4. 이상 속도 탐지
   const rawOutliers = useMemo(
     () => detectSpeedOutliers(points, "raw", speedThreshold),
     [points, speedThreshold]
@@ -34,6 +41,26 @@ function App() {
     [points, speedThreshold]
   );
 
+  const speedComparisons = useMemo(
+    () => compareSpeedOutliers(points, speedThreshold),
+    [points, speedThreshold]
+  );
+
+  const resolvedComparisons = speedComparisons.filter(
+    (item) => item.status === "resolved"
+  );
+  const remainingComparisons = speedComparisons.filter(
+    (item) => item.status === "remaining"
+  );
+  const introducedComparisons = speedComparisons.filter(
+    (item) => item.status === "introduced"
+  );
+
+  const resolvedCount = resolvedComparisons.length;
+  const remainingCount = remainingComparisons.length;
+  const introducedCount = introducedComparisons.length;
+
+  // 5. Event Handlers
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -60,6 +87,7 @@ function App() {
     }
   };
 
+  // 6 Render
   return (
     <main>
       <h1>GPS Filter Lab</h1>
@@ -187,6 +215,41 @@ function App() {
               </tbody>
             </table>
           )}
+          {
+            speedComparisons.length > 0 &&
+            <section>
+              <h3>GPS 이상 속도 비교</h3>
+              <div>
+                <div>해결됨 개수 : {resolvedCount}</div>
+                <div>여전히 이상 개수 : {remainingCount}</div>
+                <div>새로 발생 개수 : {introducedCount}</div>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sequence</th>
+                    <th>원본 속도 (km/h)</th>
+                    <th>필터링 속도 (km/h)</th>
+                    <th>상태</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {
+                    speedComparisons.map(comparison => {
+                      return (
+                        <tr key={comparison.sequence}>
+                          <td>{comparison.sequence}</td>
+                          <td>{comparison.rawSpeed.toFixed(2)}</td>
+                          <td>{comparison.filteredSpeed.toFixed(2)}</td>
+                          <td>{comparison.status}</td>
+                        </tr>
+                      )
+                    })
+                  }
+                </tbody>
+              </table>
+            </section>
+          }
         </div>
       )}
     </main>
