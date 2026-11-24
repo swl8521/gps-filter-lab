@@ -26,7 +26,7 @@ interface MapBoundsUpdaterProps {
 
 interface MapSelectionUpdaterProps {
   selectedSequence: number | null;
-  points: GpsPoint[];
+  pointMap: Map<number, GpsPoint>;
   markerRefs: RefObject<Map<number, LeafletCircleMarker>>;
 }
 
@@ -48,14 +48,14 @@ function MapBoundsUpdater({ positions }: MapBoundsUpdaterProps) {
 
 function MapSelectionUpdater({
   selectedSequence,
-  points,
+  pointMap,
   markerRefs
 }: MapSelectionUpdaterProps) {
   const map = useMap();
 
   useEffect(() => {
     if (selectedSequence === null) return;
-    const point = points.find(point => point.sequence === selectedSequence);
+    const point = pointMap.get(selectedSequence);
     if (!point) return;
 
     const handleMoveEnd = () => {
@@ -76,13 +76,22 @@ function MapSelectionUpdater({
       map.off("moveend", handleMoveEnd);
     }
 
-  }, [map, selectedSequence, points, markerRefs]);
+  }, [map, selectedSequence, pointMap, markerRefs]);
 
   return null;
 }
 
 export default function GpsMap({ points, speedComparisons, selectedSequence }: GpsMapProps) {
   const markerRefs = useRef<Map<number, LeafletCircleMarker>>(new Map());
+  const pointMap = useMemo(() => {
+    const map = new Map<number, GpsPoint>();
+
+    for (const point of points) {
+      map.set(point.sequence, point);
+    }
+
+    return map;
+  }, [points]);
 
   const rawPositions = useMemo(() => {
     return points
@@ -103,16 +112,21 @@ export default function GpsMap({ points, speedComparisons, selectedSequence }: G
       });
   }, [points]);
 
-  const outlierPositions = speedComparisons.map((comparison) => {
-    const gpsPoint = points.find(point => point.sequence === comparison.sequence);
+  const outlierPositions = useMemo(() => {
+    const result = speedComparisons.map((comparison) => {
+      const gpsPoint = pointMap.get(comparison.sequence);
 
-    if (!gpsPoint) return null;
+      if (!gpsPoint) return null;
 
-    return {
-      position: [gpsPoint.filteredLatitude, gpsPoint.filteredLongitude] as LatLngTuple,
-      comparison: comparison
-    };
-  }).filter((comparison) => comparison !== null);
+      return {
+        position: [gpsPoint.filteredLatitude, gpsPoint.filteredLongitude] as LatLngTuple,
+        comparison: comparison
+      };
+    }).filter((comparison) => comparison !== null);
+
+    return result;
+  }, [speedComparisons, pointMap]);
+
 
   function getOutlierColor(
     status: GpsSpeedComparison["status"]
@@ -183,7 +197,7 @@ export default function GpsMap({ points, speedComparisons, selectedSequence }: G
       }
       <MapSelectionUpdater
         selectedSequence={selectedSequence}
-        points={points}
+        pointMap={pointMap}
         markerRefs={markerRefs}
       />
     </MapContainer>
