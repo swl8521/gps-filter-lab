@@ -341,4 +341,4 @@ during active development.
 
 ## License
 
-License to be determined.
+This project is licensed under the [MIT License](./LICENSE).
