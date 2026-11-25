@@ -129,7 +129,9 @@ export function parseGpsCsv(csvText: string): GpsPoint[] {
           ? error.message
           : "알 수 없는 오류";
 
-      throw new Error(`CSV ${index + 2}행: ${message}`);
+      throw new Error(`CSV ${index + 2}행: ${message}`, {
+        cause: error,
+      });
     }
   });
 }
