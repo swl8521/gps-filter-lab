@@ -18,6 +18,8 @@ function App() {
   const [selectedSequence, setSelectedSequence] =
     useState<number | null>(null);
 
+  const [selectionRequestId, setSelectionRequestId] = useState(0);
+
   // 2. GPS 통계
   const stats = useMemo(() => {
     return calculateGpsStats(points);
@@ -98,6 +100,11 @@ function App() {
         setError("알 수 없는 오류가 발생했습니다.");
       }
     }
+  };
+
+  const handleSequenceSelect = (sequence: number) => {
+    setSelectedSequence(sequence);
+    setSelectionRequestId(prev => prev + 1);
   };
 
   // 6 Render
@@ -255,7 +262,7 @@ function App() {
                             <button
                               type="button"
                               onClick={() => {
-                                setSelectedSequence(comparison.sequence)
+                                handleSequenceSelect(comparison.sequence);
                               }}
                             >
                               {comparison.sequence}
@@ -274,7 +281,7 @@ function App() {
           }
           <section>
             <h3>GPS 경로 지도</h3>
-            <GpsMap points={points} speedComparisons={speedComparisons} selectedSequence={validSelectedSequence} />
+            <GpsMap points={points} speedComparisons={speedComparisons} selectedSequence={validSelectedSequence} selectionRequestId={selectionRequestId} />
           </section>
         </div>
       )}

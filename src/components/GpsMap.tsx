@@ -18,6 +18,7 @@ interface GpsMapProps {
   points: GpsPoint[];
   speedComparisons: GpsSpeedComparison[];
   selectedSequence: number | null;
+  selectionRequestId: number;
 }
 
 interface MapBoundsUpdaterProps {
@@ -26,6 +27,7 @@ interface MapBoundsUpdaterProps {
 
 interface MapSelectionUpdaterProps {
   selectedSequence: number | null;
+  selectionRequestId: number;
   pointMap: Map<number, GpsPoint>;
   markerRefs: RefObject<Map<number, LeafletCircleMarker>>;
 }
@@ -48,6 +50,7 @@ function MapBoundsUpdater({ positions }: MapBoundsUpdaterProps) {
 
 function MapSelectionUpdater({
   selectedSequence,
+  selectionRequestId,
   pointMap,
   markerRefs
 }: MapSelectionUpdaterProps) {
@@ -76,12 +79,12 @@ function MapSelectionUpdater({
       map.off("moveend", handleMoveEnd);
     }
 
-  }, [map, selectedSequence, pointMap, markerRefs]);
+  }, [map, selectedSequence, pointMap, markerRefs, selectionRequestId]);
 
   return null;
 }
 
-export default function GpsMap({ points, speedComparisons, selectedSequence }: GpsMapProps) {
+export default function GpsMap({ points, speedComparisons, selectedSequence, selectionRequestId }: GpsMapProps) {
   const markerRefs = useRef<Map<number, LeafletCircleMarker>>(new Map());
   const pointMap = useMemo(() => {
     const map = new Map<number, GpsPoint>();
@@ -197,6 +200,7 @@ export default function GpsMap({ points, speedComparisons, selectedSequence }: G
       }
       <MapSelectionUpdater
         selectedSequence={selectedSequence}
+        selectionRequestId={selectionRequestId}
         pointMap={pointMap}
         markerRefs={markerRefs}
       />
