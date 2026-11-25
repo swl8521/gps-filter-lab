@@ -13,6 +13,7 @@ import type { LatLngTuple } from "leaflet";
 import { useEffect, useMemo, useRef } from "react";
 import type { GpsSpeedComparison } from "../utils/gpsSpeedComparison";
 import type { RefObject } from "react";
+import MapLegend from "./MapLegend";
 
 interface GpsMapProps {
   points: GpsPoint[];
@@ -145,65 +146,72 @@ export default function GpsMap({ points, speedComparisons, selectedSequence, sel
   }
 
   return (
-    <MapContainer
-      center={[37.5665, 126.9780]}
-      zoom={13}
-      style={{ height: "400px", width: "100%" }}
+    <div
+      style={{
+        position: "relative"
+      }}
     >
-      <TileLayer
-        attribution="© OpenStreetMap contributors"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <Polyline
-        positions={rawPositions}
-        pathOptions={{
-          color: "red",
-          weight: 5,
-          opacity: 0.7,
-        }}
-      />
-      <Polyline
-        positions={filteredPositions}
-        pathOptions={{
-          color: "blue",
-          weight: 3,
-          opacity: 0.8,
-        }}
-      />
-      <MapBoundsUpdater positions={rawPositions} />
-      {
-        outlierPositions.map((item) =>
-          <CircleMarker
-            key={item.comparison.sequence}
-            center={item.position}
-            radius={6}
-            pathOptions={{ color: getOutlierColor(item.comparison.status) }}
-            ref={(marker) => {
-              if (marker) {
-                markerRefs.current.set(item.comparison.sequence, marker);
-              } else {
-                markerRefs.current.delete(item.comparison.sequence);
-              }
-            }}
-          >
-            <Popup>
-              <div>GPS 이상 속도 정보</div>
-              <div>
-                <div>Sequence: {item.comparison.sequence}</div>
-                <div>원본 속도: {item.comparison.rawSpeed.toFixed(2)} km/h</div>
-                <div>필터링 속도: {item.comparison.filteredSpeed.toFixed(2)} km/h</div>
-                <div>상태: {item.comparison.status}</div>
-              </div>
-            </Popup>
-          </CircleMarker>
-        )
-      }
-      <MapSelectionUpdater
-        selectedSequence={selectedSequence}
-        selectionRequestId={selectionRequestId}
-        pointMap={pointMap}
-        markerRefs={markerRefs}
-      />
-    </MapContainer>
+      <MapContainer
+        center={[37.5665, 126.9780]}
+        zoom={13}
+        style={{ height: "400px", width: "100%" }}
+      >
+        <TileLayer
+          attribution="© OpenStreetMap contributors"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Polyline
+          positions={rawPositions}
+          pathOptions={{
+            color: "red",
+            weight: 5,
+            opacity: 0.7,
+          }}
+        />
+        <Polyline
+          positions={filteredPositions}
+          pathOptions={{
+            color: "blue",
+            weight: 3,
+            opacity: 0.8,
+          }}
+        />
+        <MapBoundsUpdater positions={rawPositions} />
+        {
+          outlierPositions.map((item) =>
+            <CircleMarker
+              key={item.comparison.sequence}
+              center={item.position}
+              radius={6}
+              pathOptions={{ color: getOutlierColor(item.comparison.status) }}
+              ref={(marker) => {
+                if (marker) {
+                  markerRefs.current.set(item.comparison.sequence, marker);
+                } else {
+                  markerRefs.current.delete(item.comparison.sequence);
+                }
+              }}
+            >
+              <Popup>
+                <div>GPS 이상 속도 정보</div>
+                <div>
+                  <div>Sequence: {item.comparison.sequence}</div>
+                  <div>원본 속도: {item.comparison.rawSpeed.toFixed(2)} km/h</div>
+                  <div>필터링 속도: {item.comparison.filteredSpeed.toFixed(2)} km/h</div>
+                  <div>상태: {item.comparison.status}</div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          )
+        }
+        <MapSelectionUpdater
+          selectedSequence={selectedSequence}
+          selectionRequestId={selectionRequestId}
+          pointMap={pointMap}
+          markerRefs={markerRefs}
+        />
+      </MapContainer>
+      <MapLegend />
+    </div>
   );
 }
