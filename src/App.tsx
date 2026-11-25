@@ -63,6 +63,17 @@ function App() {
   const remainingCount = remainingComparisons.length;
   const introducedCount = introducedComparisons.length;
 
+  const validSelectedSequence = useMemo(() => {
+    if (selectedSequence === null) return null;
+
+    const isExist = speedComparisons.some(comparison => comparison.sequence === selectedSequence);
+
+    if (isExist)
+      return selectedSequence;
+    else
+      return null;
+  }, [selectedSequence, speedComparisons]);
+
   // 5. Event Handlers
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -71,16 +82,15 @@ function App() {
 
     if (!selectedFile) return;
 
-    setFile(selectedFile);
-    setPoints([]);
-    setError(null);
-    setCsvText("");
-
     try {
       const text = await selectedFile.text();
-      setCsvText(text);
       const parsedPoints = parseGpsCsv(text);
+      // 파싱 성공
+      setFile(selectedFile);
+      setCsvText(text);
       setPoints(parsedPoints);
+      setSelectedSequence(null);
+      setError(null);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -264,7 +274,7 @@ function App() {
           }
           <section>
             <h3>GPS 경로 지도</h3>
-            <GpsMap points={points} speedComparisons={speedComparisons} selectedSequence={selectedSequence} />
+            <GpsMap points={points} speedComparisons={speedComparisons} selectedSequence={validSelectedSequence} />
           </section>
         </div>
       )}
