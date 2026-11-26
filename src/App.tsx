@@ -257,10 +257,16 @@ function App() {
                   {
                     speedComparisons.map(comparison => {
                       return (
-                        <tr key={comparison.sequence}>
+                        <tr key={comparison.sequence}
+                          style={{
+                            backgroundColor: comparison.sequence === validSelectedSequence ? "#dbeafe" : "transparent",
+                          }}>
                           <td>
                             <button
                               type="button"
+                              style={{
+                                cursor: "pointer",
+                              }}
                               onClick={() => {
                                 handleSequenceSelect(comparison.sequence);
                               }}
@@ -281,7 +287,12 @@ function App() {
           }
           <section>
             <h3>GPS 경로 지도</h3>
-            <GpsMap points={points} speedComparisons={speedComparisons} selectedSequence={validSelectedSequence} selectionRequestId={selectionRequestId} />
+            <GpsMap
+              points={points}
+              speedComparisons={speedComparisons}
+              selectedSequence={validSelectedSequence}
+              selectionRequestId={selectionRequestId}
+              onSequenceSelect={handleSequenceSelect} />
           </section>
         </div>
       )}

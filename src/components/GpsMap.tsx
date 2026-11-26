@@ -20,6 +20,7 @@ interface GpsMapProps {
   speedComparisons: GpsSpeedComparison[];
   selectedSequence: number | null;
   selectionRequestId: number;
+  onSequenceSelect: (sequence: number) => void;
 }
 
 interface MapBoundsUpdaterProps {
@@ -85,7 +86,7 @@ function MapSelectionUpdater({
   return null;
 }
 
-export default function GpsMap({ points, speedComparisons, selectedSequence, selectionRequestId }: GpsMapProps) {
+export default function GpsMap({ points, speedComparisons, selectedSequence, selectionRequestId, onSequenceSelect }: GpsMapProps) {
   const markerRefs = useRef<Map<number, LeafletCircleMarker>>(new Map());
   const pointMap = useMemo(() => {
     const map = new Map<number, GpsPoint>();
@@ -190,6 +191,11 @@ export default function GpsMap({ points, speedComparisons, selectedSequence, sel
                 } else {
                   markerRefs.current.delete(item.comparison.sequence);
                 }
+              }}
+              eventHandlers={{
+                click: () => {
+                  onSequenceSelect(item.comparison.sequence);
+                },
               }}
             >
               <Popup>
