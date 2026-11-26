@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import type { GpsPoint } from "./types/gps";
 import { parseGpsCsv } from "./utils/parseGpsCsv";
 import { calculateGpsStats } from "./utils/gpsStats";
@@ -19,6 +19,9 @@ function App() {
     useState<number | null>(null);
 
   const [selectionRequestId, setSelectionRequestId] = useState(0);
+
+  const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
   // 2. GPS 통계
   const stats = useMemo(() => {
@@ -106,6 +109,29 @@ function App() {
     setSelectedSequence(sequence);
     setSelectionRequestId(prev => prev + 1);
   };
+
+  useEffect(() => {
+    if (validSelectedSequence === null) return;
+
+    const row = rowRefs.current.get(validSelectedSequence);
+    const container = tableContainerRef.current;
+
+    if (!row || !container) return;
+
+    const rowRect = row.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    const rowTop = rowRect.top - containerRect.top + container.scrollTop;
+    const rowCenter = rowTop + rowRect.height / 2;
+    const containerCenter = container.clientHeight / 2;
+    const targetScrollTop = rowCenter - containerCenter;
+
+    container.scrollTo({
+      top: targetScrollTop,
+      behavior: "smooth",
+    });
+
+  }, [validSelectedSequence, selectionRequestId]);
 
   // 6 Render
   return (
@@ -244,45 +270,61 @@ function App() {
                 <div>여전히 이상 개수 : {remainingCount}</div>
                 <div>새로 발생 개수 : {introducedCount}</div>
               </div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Sequence</th>
-                    <th>원본 속도 (km/h)</th>
-                    <th>필터링 속도 (km/h)</th>
-                    <th>상태</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {
-                    speedComparisons.map(comparison => {
-                      return (
-                        <tr key={comparison.sequence}
-                          style={{
-                            backgroundColor: comparison.sequence === validSelectedSequence ? "#dbeafe" : "transparent",
-                          }}>
-                          <td>
-                            <button
-                              type="button"
-                              style={{
-                                cursor: "pointer",
-                              }}
-                              onClick={() => {
-                                handleSequenceSelect(comparison.sequence);
-                              }}
-                            >
-                              {comparison.sequence}
-                            </button>
-                          </td>
-                          <td>{comparison.rawSpeed.toFixed(2)}</td>
-                          <td>{comparison.filteredSpeed.toFixed(2)}</td>
-                          <td>{comparison.status}</td>
-                        </tr>
-                      )
-                    })
-                  }
-                </tbody>
-              </table>
+              <div
+                style={{
+                  maxHeight: "300px",
+                  overflowY: "auto",
+                }}
+                ref={tableContainerRef}
+              >
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Sequence</th>
+                      <th>원본 속도 (km/h)</th>
+                      <th>필터링 속도 (km/h)</th>
+                      <th>상태</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {
+                      speedComparisons.map(comparison => {
+                        return (
+                          <tr key={comparison.sequence}
+                            style={{
+                              backgroundColor: comparison.sequence === validSelectedSequence ? "#dbeafe" : "transparent",
+                            }}
+                            ref={(element) => {
+                              if (element) {
+                                rowRefs.current.set(comparison.sequence, element);
+                              } else {
+                                rowRefs.current.delete(comparison.sequence);
+                              }
+                            }}
+                          >
+                            <td>
+                              <button
+                                type="button"
+                                style={{
+                                  cursor: "pointer",
+                                }}
+                                onClick={() => {
+                                  handleSequenceSelect(comparison.sequence);
+                                }}
+                              >
+                                {comparison.sequence}
+                              </button>
+                            </td>
+                            <td>{comparison.rawSpeed.toFixed(2)}</td>
+                            <td>{comparison.filteredSpeed.toFixed(2)}</td>
+                            <td>{comparison.status}</td>
+                          </tr>
+                        )
+                      })
+                    }
+                  </tbody>
+                </table>
+              </div>
             </section>
           }
           <section>
