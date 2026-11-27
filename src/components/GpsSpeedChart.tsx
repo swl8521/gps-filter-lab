@@ -1,16 +1,5 @@
-import {
-  ResponsiveContainer,
-  LineChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Line,
-  ReferenceLine
-} from "recharts";
-
 import type { GpsSpeedChartPoint } from "../utils/gpsChartData";
+import { GpsLineChart } from "./GpsLineChart";
 
 interface GpsSpeedChartProps {
   data: GpsSpeedChartPoint[],
@@ -18,40 +7,28 @@ interface GpsSpeedChartProps {
 }
 
 export function GpsSpeedChart(props: GpsSpeedChartProps) {
-  return <div
-    style={{
-      width: "100%",
-      height: "300px",
-    }}>
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart
-        data={props.data}
-      >
-        <XAxis dataKey={"sequence"} />
-        <YAxis unit=" km/h" />
-        <CartesianGrid strokeDasharray={"3 3"} />
-        <Tooltip />
-        <Legend />
-        <ReferenceLine
-          y={props.speedThreshold}
-          stroke="orange"
-          strokeDasharray="5 5"
-        />
-        <Line
-          dataKey={"rawSpeed"}
-          stroke="red"
-          dot={false}
-          connectNulls={false}
-          name="원본 속도"
-        />
-        <Line
-          dataKey={"filteredSpeed"}
-          stroke="blue"
-          dot={false}
-          connectNulls={false}
-          name="필터링 속도"
-        />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
+  return (
+    <GpsLineChart
+      data={props.data}
+      lines={[
+        {
+          "dataKey": "rawSpeed",
+          "name": "원본 속도",
+          "stroke": "red"
+        },
+        {
+          "dataKey": "filteredSpeed",
+          "name": "필터링 속도",
+          "stroke": "blue"
+        }
+      ]}
+      yAxisUnit=" km/h"
+      referenceLine={{
+        y: props.speedThreshold,
+        stroke: "orange",
+        strokeDasharray: "5 5",
+        label: "이상 속도 기준선",
+      }}
+    />
+  )
 }
