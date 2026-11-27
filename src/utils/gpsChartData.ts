@@ -8,6 +8,12 @@ export interface GpsSpeedChartPoint {
   filteredSpeed: number | null;
 }
 
+export interface GpsAccuracyChartPoint {
+  sequence: number;
+  recordedAt: number;
+  accuracy: number;
+}
+
 export function createGpsSpeedChartData(
   points: GpsPoint[]
 ): GpsSpeedChartPoint[] {
@@ -22,4 +28,14 @@ export function createGpsSpeedChartData(
       filteredSpeed
     };
   });
+}
+
+export function createGpsAccuracyChartData(
+  points: GpsPoint[]
+): GpsAccuracyChartPoint[] {
+  return points.map(point => ({
+    "sequence": point.sequence,
+    "recordedAt": point.recordedAt,
+    "accuracy": point.accuracy,
+  }));
 }

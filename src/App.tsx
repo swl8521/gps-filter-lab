@@ -6,8 +6,9 @@ import { calculateGpsSpeedStats } from "./utils/gpsSpeed";
 import { detectSpeedOutliers } from "./utils/gpsOutliers";
 import { compareSpeedOutliers } from "./utils/gpsSpeedComparison";
 import GpsMap from "./components/GpsMap";
-import { createGpsSpeedChartData } from "./utils/gpsChartData";
+import { createGpsSpeedChartData, createGpsAccuracyChartData } from "./utils/gpsChartData";
 import { GpsSpeedChart } from "./components/GpsSpeedChart";
+import { GpsAccuracyChart } from "./components/GpsAccuracyChart";
 
 function App() {
   // 1. state
@@ -83,6 +84,10 @@ function App() {
 
   const speedChartData = useMemo(() => {
     return createGpsSpeedChartData(points);
+  }, [points]);
+
+  const accuracyChartData = useMemo(() => {
+    return createGpsAccuracyChartData(points);
   }, [points]);
 
   // 5. Event Handlers
@@ -359,6 +364,7 @@ function App() {
           <section>
             <h3>차트</h3>
             <GpsSpeedChart data={speedChartData} speedThreshold={speedThreshold} />
+            <GpsAccuracyChart data={accuracyChartData} />
           </section>
         </div>
       )}
