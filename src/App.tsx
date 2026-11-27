@@ -6,6 +6,8 @@ import { calculateGpsSpeedStats } from "./utils/gpsSpeed";
 import { detectSpeedOutliers } from "./utils/gpsOutliers";
 import { compareSpeedOutliers } from "./utils/gpsSpeedComparison";
 import GpsMap from "./components/GpsMap";
+import { createGpsSpeedChartData } from "./utils/gpsChartData";
+import { GpsSpeedChart } from "./components/GpsSpeedChart";
 
 function App() {
   // 1. state
@@ -78,6 +80,10 @@ function App() {
     else
       return null;
   }, [selectedSequence, speedComparisons]);
+
+  const speedChartData = useMemo(() => {
+    return createGpsSpeedChartData(points);
+  }, [points]);
 
   // 5. Event Handlers
   const handleFileChange = async (
@@ -158,7 +164,7 @@ function App() {
         </div>
       )}
 
-      {!error && points.length > 0 && (
+      {points.length > 0 && (
         <div>
           <div>전체 GPS 포인트 : {stats.totalPoints}</div>
           <div>유효 GPS 포인트 : {stats.validPoints}</div>
@@ -219,47 +225,61 @@ function App() {
           {rawOutliers.length === 0 ? (
             <p>이상 속도 구간이 없습니다.</p>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Sequence</th>
-                  <th>기록 시간</th>
-                  <th>속도 (km/h)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rawOutliers.map((outlier) => (
-                  <tr key={outlier.sequence}>
-                    <td>{outlier.sequence}</td>
-                    <td>{new Date(outlier.recordedAt).toLocaleString("ko-KR")}</td>
-                    <td>{outlier.speed.toFixed(2)}</td>
+            <div
+              style={{
+                maxHeight: "300px",
+                overflowY: "auto",
+              }}
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sequence</th>
+                    <th>기록 시간</th>
+                    <th>속도 (km/h)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rawOutliers.map((outlier) => (
+                    <tr key={outlier.sequence}>
+                      <td>{outlier.sequence}</td>
+                      <td>{new Date(outlier.recordedAt).toLocaleString("ko-KR")}</td>
+                      <td>{outlier.speed.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
           <h3>필터링 GPS 이상 속도 구간</h3>
           {filteredOutliers.length === 0 ? (
             <p>이상 속도 구간이 없습니다.</p>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Sequence</th>
-                  <th>기록 시간</th>
-                  <th>속도 (km/h)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOutliers.map((outlier) => (
-                  <tr key={outlier.sequence}>
-                    <td>{outlier.sequence}</td>
-                    <td>{new Date(outlier.recordedAt).toLocaleString("ko-KR")}</td>
-                    <td>{outlier.speed.toFixed(2)}</td>
+            <div
+              style={{
+                maxHeight: "300px",
+                overflowY: "auto",
+              }}
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sequence</th>
+                    <th>기록 시간</th>
+                    <th>속도 (km/h)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredOutliers.map((outlier) => (
+                    <tr key={outlier.sequence}>
+                      <td>{outlier.sequence}</td>
+                      <td>{new Date(outlier.recordedAt).toLocaleString("ko-KR")}</td>
+                      <td>{outlier.speed.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
           {
             speedComparisons.length > 0 &&
@@ -335,6 +355,10 @@ function App() {
               selectedSequence={validSelectedSequence}
               selectionRequestId={selectionRequestId}
               onSequenceSelect={handleSequenceSelect} />
+          </section>
+          <section>
+            <h3>차트</h3>
+            <GpsSpeedChart data={speedChartData} speedThreshold={speedThreshold} />
           </section>
         </div>
       )}
