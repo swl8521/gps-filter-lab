@@ -12,6 +12,8 @@ import { GpsAccuracyChart } from "./components/GpsAccuracyChart";
 import { GpsOutlierTable } from "./components/GpsOutlierTable";
 import { GpsStatsSummary } from "./components/GpsStatsSummary";
 import { SpeedThresholdControl } from "./components/SpeedThresholdControl";
+import { CsvFileInput } from "./components/CsvFileInput";
+import { CsvPreview } from "./components/CsvPreview";
 
 function App() {
   // 1. state
@@ -94,18 +96,14 @@ function App() {
   }, [points]);
 
   // 5. Event Handlers
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+  const handleFileSelect = async (
+    file: File
   ) => {
-    const selectedFile = event.target.files?.[0];
-
-    if (!selectedFile) return;
-
     try {
-      const text = await selectedFile.text();
+      const text = await file.text();
       const parsedPoints = parseGpsCsv(text);
       // 파싱 성공
-      setFile(selectedFile);
+      setFile(file);
       setCsvText(text);
       setPoints(parsedPoints);
       setSelectedSequence(null);
@@ -153,24 +151,8 @@ function App() {
       <h1>GPS Filter Lab</h1>
       <p>GPS 원본 좌표와 필터링 결과를 비교합니다.</p>
 
-      <input
-        type="file"
-        accept=".csv"
-        onChange={handleFileChange}
-      />
-
-      {file && (
-        <p>선택한 파일: {file.name}</p>
-      )}
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      {csvText && (
-        <div>
-          <h2>CSV 미리보기</h2>
-          <pre>{csvText.slice(0, 500)}</pre>
-        </div>
-      )}
+      <CsvFileInput file={file} error={error} onFileSelect={handleFileSelect} />
+      <CsvPreview csvText={csvText} />
 
       {points.length > 0 && (
         <div>
