@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { GpsPoint } from "./types/gps";
+import type { GpsDataset, GpsPoint } from "./types/gps";
 import { parseGpsCsv } from "./utils/parseGpsCsv";
 import { calculateGpsStats } from "./utils/gpsStats";
 import { calculateGpsSpeedStats } from "./utils/gpsSpeed";
@@ -16,11 +16,14 @@ import { CsvFileInput } from "./components/CsvFileInput";
 import { CsvPreview } from "./components/CsvPreview";
 import { GpsSpeedComparisonTable } from "./components/GpsSpeedComparisonTable";
 
+const EMPTY_POINTS: GpsPoint[] = [];
+
 function App() {
   // 1. state
-  const [file, setFile] = useState<File | null>(null);
-  const [csvText, setCsvText] = useState<string>("");
-  const [points, setPoints] = useState<GpsPoint[]>([]);
+  const [dataset, setDataset] = useState<GpsDataset | null>(null);
+  const file = dataset?.file ?? null;
+  const csvText = dataset?.csvText ?? "";
+  const points = dataset?.points ?? EMPTY_POINTS;
 
   const [error, setError] = useState<string | null>(null);
   const [speedThreshold, setSpeedThreshold] = useState(25);
@@ -87,9 +90,11 @@ function App() {
       const text = await file.text();
       const parsedPoints = parseGpsCsv(text);
       // 파싱 성공
-      setFile(file);
-      setCsvText(text);
-      setPoints(parsedPoints);
+      setDataset({
+        file,
+        csvText: text,
+        points: parsedPoints,
+      });
       setSelectedSequence(null);
       setError(null);
     } catch (error) {
