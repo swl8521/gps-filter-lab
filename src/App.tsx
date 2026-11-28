@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { GpsDataset, GpsPoint } from "./types/gps";
 import { parseGpsCsv } from "./utils/parseGpsCsv";
 import GpsMap from "./components/GpsMap";
@@ -11,23 +11,22 @@ import { CsvFileInput } from "./components/CsvFileInput";
 import { CsvPreview } from "./components/CsvPreview";
 import { GpsSpeedComparisonTable } from "./components/GpsSpeedComparisonTable";
 import { useGpsAnalysis } from "./hooks/useGpsAnalysis";
+import { useGpsSelection } from "./hooks/useGpsSelection";
 
 const EMPTY_POINTS: GpsPoint[] = [];
 
 function App() {
-  // 1. state
+  // State
   const [dataset, setDataset] = useState<GpsDataset | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [speedThreshold, setSpeedThreshold] = useState(25);
+
+  // Derived Data
   const file = dataset?.file ?? null;
   const csvText = dataset?.csvText ?? "";
   const points = dataset?.points ?? EMPTY_POINTS;
 
-  const [error, setError] = useState<string | null>(null);
-  const [speedThreshold, setSpeedThreshold] = useState(25);
-  const [selectedSequence, setSelectedSequence] =
-    useState<number | null>(null);
-
-  const [selectionRequestId, setSelectionRequestId] = useState(0);
-
+  // GPS Analysis
   const {
     stats,
     rawSpeedStats,
@@ -42,18 +41,17 @@ function App() {
     speedThreshold,
   });
 
-  const validSelectedSequence = useMemo(() => {
-    if (selectedSequence === null) return null;
+  // GPS Selection
+  const {
+    selectionRequestId,
+    validSelectedSequence,
+    handleSequenceSelect,
+    resetSelection,
+  } = useGpsSelection({
+    speedComparisons
+  });
 
-    const isExist = speedComparisons.some(comparison => comparison.sequence === selectedSequence);
-
-    if (isExist)
-      return selectedSequence;
-    else
-      return null;
-  }, [selectedSequence, speedComparisons]);
-
-  // 5. Event Handlers
+  // Event Handlers
   const handleFileSelect = async (
     file: File
   ) => {
@@ -66,7 +64,7 @@ function App() {
         csvText: text,
         points: parsedPoints,
       });
-      setSelectedSequence(null);
+      resetSelection();
       setError(null);
     } catch (error) {
       if (error instanceof Error) {
@@ -77,12 +75,7 @@ function App() {
     }
   };
 
-  const handleSequenceSelect = (sequence: number) => {
-    setSelectedSequence(sequence);
-    setSelectionRequestId(prev => prev + 1);
-  };
-
-  // 6 Render
+  // Render
   return (
     <main>
       <h1>GPS Filter Lab</h1>
