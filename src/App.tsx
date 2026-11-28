@@ -9,6 +9,7 @@ import GpsMap from "./components/GpsMap";
 import { createGpsSpeedChartData, createGpsAccuracyChartData } from "./utils/gpsChartData";
 import { GpsSpeedChart } from "./components/GpsSpeedChart";
 import { GpsAccuracyChart } from "./components/GpsAccuracyChart";
+import { GpsOutlierTable } from "./components/GpsOutlierTable";
 
 function App() {
   // 1. state
@@ -226,66 +227,8 @@ function App() {
           <div>
             필터링 GPS 이상 속도 구간 : {filteredOutliers.length}개
           </div>
-          <h3>원본 GPS 이상 속도 구간</h3>
-          {rawOutliers.length === 0 ? (
-            <p>이상 속도 구간이 없습니다.</p>
-          ) : (
-            <div
-              style={{
-                maxHeight: "300px",
-                overflowY: "auto",
-              }}
-            >
-              <table>
-                <thead>
-                  <tr>
-                    <th>Sequence</th>
-                    <th>기록 시간</th>
-                    <th>속도 (km/h)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rawOutliers.map((outlier) => (
-                    <tr key={outlier.sequence}>
-                      <td>{outlier.sequence}</td>
-                      <td>{new Date(outlier.recordedAt).toLocaleString("ko-KR")}</td>
-                      <td>{outlier.speed.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <h3>필터링 GPS 이상 속도 구간</h3>
-          {filteredOutliers.length === 0 ? (
-            <p>이상 속도 구간이 없습니다.</p>
-          ) : (
-            <div
-              style={{
-                maxHeight: "300px",
-                overflowY: "auto",
-              }}
-            >
-              <table>
-                <thead>
-                  <tr>
-                    <th>Sequence</th>
-                    <th>기록 시간</th>
-                    <th>속도 (km/h)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOutliers.map((outlier) => (
-                    <tr key={outlier.sequence}>
-                      <td>{outlier.sequence}</td>
-                      <td>{new Date(outlier.recordedAt).toLocaleString("ko-KR")}</td>
-                      <td>{outlier.speed.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <GpsOutlierTable title="원본 GPS 이상 속도 구간" outliers={rawOutliers} />
+          <GpsOutlierTable title="필터링 GPS 이상 속도 구간" outliers={filteredOutliers} />
           {
             speedComparisons.length > 0 &&
             <section>
