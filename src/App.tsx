@@ -1,12 +1,7 @@
 import { useMemo, useState } from "react";
 import type { GpsDataset, GpsPoint } from "./types/gps";
 import { parseGpsCsv } from "./utils/parseGpsCsv";
-import { calculateGpsStats } from "./utils/gpsStats";
-import { calculateGpsSpeedStats } from "./utils/gpsSpeed";
-import { detectSpeedOutliers } from "./utils/gpsOutliers";
-import { compareSpeedOutliers } from "./utils/gpsSpeedComparison";
 import GpsMap from "./components/GpsMap";
-import { createGpsSpeedChartData, createGpsAccuracyChartData } from "./utils/gpsChartData";
 import { GpsSpeedChart } from "./components/GpsSpeedChart";
 import { GpsAccuracyChart } from "./components/GpsAccuracyChart";
 import { GpsOutlierTable } from "./components/GpsOutlierTable";
@@ -15,6 +10,7 @@ import { SpeedThresholdControl } from "./components/SpeedThresholdControl";
 import { CsvFileInput } from "./components/CsvFileInput";
 import { CsvPreview } from "./components/CsvPreview";
 import { GpsSpeedComparisonTable } from "./components/GpsSpeedComparisonTable";
+import { useGpsAnalysis } from "./hooks/useGpsAnalysis";
 
 const EMPTY_POINTS: GpsPoint[] = [];
 
@@ -32,36 +28,19 @@ function App() {
 
   const [selectionRequestId, setSelectionRequestId] = useState(0);
 
-  // 2. GPS 통계
-  const stats = useMemo(() => {
-    return calculateGpsStats(points);
-  }, [points]);
-
-  // 3. 속도 통계
-  const rawSpeedStats = useMemo(
-    () => calculateGpsSpeedStats(points, "raw"),
-    [points]
-  );
-  const filteredSpeedStats = useMemo(
-    () => calculateGpsSpeedStats(points, "filtered"),
-    [points]
-  );
-
-  // 4. 이상 속도 탐지
-  const rawOutliers = useMemo(
-    () => detectSpeedOutliers(points, "raw", speedThreshold),
-    [points, speedThreshold]
-  );
-
-  const filteredOutliers = useMemo(
-    () => detectSpeedOutliers(points, "filtered", speedThreshold),
-    [points, speedThreshold]
-  );
-
-  const speedComparisons = useMemo(
-    () => compareSpeedOutliers(points, speedThreshold),
-    [points, speedThreshold]
-  );
+  const {
+    stats,
+    rawSpeedStats,
+    filteredSpeedStats,
+    rawOutliers,
+    filteredOutliers,
+    speedComparisons,
+    speedChartData,
+    accuracyChartData
+  } = useGpsAnalysis({
+    points,
+    speedThreshold,
+  });
 
   const validSelectedSequence = useMemo(() => {
     if (selectedSequence === null) return null;
@@ -73,14 +52,6 @@ function App() {
     else
       return null;
   }, [selectedSequence, speedComparisons]);
-
-  const speedChartData = useMemo(() => {
-    return createGpsSpeedChartData(points);
-  }, [points]);
-
-  const accuracyChartData = useMemo(() => {
-    return createGpsAccuracyChartData(points);
-  }, [points]);
 
   // 5. Event Handlers
   const handleFileSelect = async (
